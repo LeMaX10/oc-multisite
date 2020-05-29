@@ -1,0 +1,27 @@
+# ===================================
+#  Form Behavior Config
+# ===================================
+
+# Record name
+name: 'Сайт'
+
+# Model Form Field configuration
+form: $/lemax10/multisite/models/site/fields.yaml
+
+# Model Class name
+modelClass: LeMaX10\MultiSite\Models\Site
+
+# Default redirect location
+defaultRedirect: lemax10/multisite/sites
+
+# Update page
+update:
+    title: Изменить сайт
+    redirect: lemax10/multisite/sites/update/:id
+    redirectClose: lemax10/multisite/sites
+
+# Create page
+create:
+    title: Создать сайт
+    redirect: lemax10/multisite/sites/update/:id
+    redirectClose: lemax10/multisite/sites

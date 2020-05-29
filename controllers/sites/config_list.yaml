@@ -1,0 +1,14 @@
+title: 'Список сайтов'
+modelClass: LeMaX10\MultiSite\Models\Site
+list: $/lemax10/multisite/models/site/columns.yaml
+recordUrl: 'lemax10/multisite/sites/update/:id'
+noRecordsMessage: 'backend::lang.list.no_records'
+showSetup: true
+showCheckboxes: true
+defaultSort:
+     column: sort_order
+     direction: asc
+toolbar:
+    buttons: list_toolbar
+    search:
+        prompt: 'backend::lang.list.search_prompt'

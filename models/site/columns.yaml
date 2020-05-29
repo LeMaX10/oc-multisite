@@ -1,0 +1,19 @@
+columns:
+    id:
+        label: '#'
+        searchable: true
+        sortable: true
+    name:
+        label: 'Название сайта'
+        sortable: true
+        searchable: true
+    domain:
+        label: 'Домен'
+        sortable: true
+        searchable: true
+    is_active:
+        label: 'Активность'
+        type: switch
+    is_protected:
+        label: 'Protected'
+        type: switch

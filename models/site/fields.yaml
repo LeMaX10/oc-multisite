@@ -1,0 +1,79 @@
+fields:
+    name:
+        label: 'Название сайта'
+        required: 1
+        span: left
+        type: text
+        comment: 'Название сайта для заголовка'
+    slug:
+        label: 'Алиас'
+        required: 1
+        span: right
+        comment: 'Алтернативное уникальное название, используемое для конфигурации и доступа'
+        preset: name
+    domain:
+        label: 'Основной домен'
+        comment: 'Основной домен сайта'
+        span: left
+        required: 1
+        type: text
+        placehoder: 'domain.com'
+    theme:
+        label: 'Шаблон'
+        span: right
+        type: dropdown
+        comment: 'Шаблон используемый при переходе на сайт'
+    is_active:
+        label: 'Активность'
+        type: switch
+        span: left
+tabs:
+    fields:
+        alt_domains:
+            label: 'Альтернативные домены'
+            type: textarea
+            span: left
+            tab: 'Основные'
+            comment: 'Список альтернативных доменов через пробел'
+            placeholder: 'subdomain.domain.com subdomain1.domain.com'
+        is_protected:
+            label: 'Protected'
+            type: switch
+            tab: 'Основные'
+            span: left
+            comment: 'Доступ к сайту только для авторизованных пользователей административной панели'
+        is_https:
+            label: 'Принудительный https'
+            type: switch
+            tab: Основные
+            span: left
+            comment: 'Принудительно редиректить на https соединение'
+        config[headers]:
+            tab: Настройки
+            label: 'Заголовки'
+            type: repeater
+            titleFrom: key
+            prompt: 'Добавить'
+            form:
+                fields:
+                    key:
+                        label: Имя (key)
+                        comment: 'Например: Authorization'
+                    value:
+                        label: Значение (value)
+                        comment: 'Например: Bearer username:password'
+        config[config]:
+            tab: Настройки
+            label: 'Конфигурация'
+            type: repeater
+            titleFrom: key
+            prompt: 'Добавить'
+            comment: 'Значения конфигурации будут доступны по ключу {slug}::{key}, возможно переопределение стандартной конфигурации проекта обращаясь к глобальному пространству "*::"'
+            form:
+                fields:
+                    key:
+                        label: Имя (key)
+                        comment: 'Например: param'
+                    value:
+                        label: Значение (value)
+                        comment: 'Например: test'
