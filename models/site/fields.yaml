@@ -27,6 +27,11 @@ fields:
         label: 'Активность'
         type: switch
         span: left
+    config[is_page_cache]:
+        label: 'Кеширование роутов'
+        comment: 'Стандартное кеширование страниц octobercms'
+        type: switch
+        span: left
 tabs:
     fields:
         alt_domains:
@@ -36,6 +41,12 @@ tabs:
             tab: 'Основные'
             comment: 'Список альтернативных доменов через пробел'
             placeholder: 'subdomain.domain.com subdomain1.domain.com'
+        config[robots]:
+            label: 'robots.txt'
+            type: textarea
+            span: left
+            tab: 'Основные'
+            сomment: 'Содержимое robots.txt сайта'
         config[headers]:
             tab: Настройки
             label: 'Заголовки'
@@ -81,5 +92,11 @@ tabs:
             tab: Безопасность
             label: 'Доступ к backend'
             comment: 'Отключить доступ к backend на сайте'
+            type: switch
+            default: 0
+        config[security][safeMode]:
+            tab: Безопасность
+            label: 'Безопасный режим'
+            comment: 'Стандартный безопасный режим octobercms, отключение возможности редактирования php секции шаблона'
             type: switch
             default: 0

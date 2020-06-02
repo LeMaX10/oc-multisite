@@ -1,11 +1,10 @@
 <?php namespace LeMaX10\MultiSite\Classes;
 
-use Backend\Facades\BackendAuth;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Event;
 use LeMaX10\MultiSite\Classes\Contracts\Entities\Site;
 use \LeMaX10\MultiSite\Classes\Contracts\SiteManager;
 use October\Rain\Support\Facades\Config;
-use October\Rain\Support\Traits\Singleton;
 
 /**
  * Class SiteConfiguration
@@ -36,6 +35,7 @@ class SiteConfiguration
         $this->standartConfigurationEnviroinment();
         $this->configureEnviroinment();
         $this->configureTemplate();
+        $this->registerRobotsRoute();
     }
 
     /**
@@ -59,6 +59,10 @@ class SiteConfiguration
         }
 
         Config::set('app.url', $schema.'://'. $this->site->domain);
+        Config::set('cache.prefix', 'multisite.'. $this->site->getSlug());
+        Config::set('cms.linkPolicy', $this->site->forceHttps() ? 'secure' : 'detected');
+        Config::set('cms.enableSafeMode', $this->site->safeMode());
+        Config::set('cms.enableRoutesCache', $this->site->isPagesCache());
     }
 
     /**
@@ -89,6 +93,23 @@ class SiteConfiguration
 
         Event::listen('cms.theme.getActiveTheme', static function () use ($template): string {
             return $template;
+        });
+    }
+
+    /**
+     *
+     */
+    public function registerRobotsRoute(): void
+    {
+        $robotsContent = $this->site->getRobotsContent();
+        if (empty($robotsContent)) {
+            return;
+        }
+
+        Route::get('robots.txt', static function () use ($robotsContent) {
+            return response($robotsContent, 200, [
+                'Content-Type' => 'text/plain; charset=UTF-8'
+            ]);
         });
     }
 }

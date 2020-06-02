@@ -49,4 +49,10 @@ interface Site
      * @return bool
      */
     public function disableBackend(): bool;
+
+    /**
+     * Get Robots txt content
+     * @return string
+     */
+    public function getRobotsContent(): string;
 }

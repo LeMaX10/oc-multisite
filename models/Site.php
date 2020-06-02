@@ -231,4 +231,22 @@ class Site extends Model implements SiteEntityContract
     {
         return !Arr::get($this->config, 'security.backend', false);
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function getRobotsContent(): string
+    {
+        return Arr::get($this->config, 'robots', '');
+    }
+
+    public function isPagesCache(): bool
+    {
+        return (bool) Arr::get($this->config, 'is_page_cache');
+    }
+
+    public function safeMode(): bool
+    {
+        return (bool) Arr::get($this->config, 'security.safeMode');
+    }
 }
