@@ -1,5 +1,6 @@
 <?php namespace LeMaX10\MultiSite\Classes\Contracts;
 
+use LeMaX10\MultiSite\Classes\Contracts\Entities\Site;
 
 interface SiteManager
 {
@@ -35,21 +36,6 @@ interface SiteManager
      * @return bool
      */
     public function access(): bool;
-
-    /**
-     * @return bool
-     */
-    public function forceSsl(): bool;
-
-    /**
-     * Initial configuration
-     */
-    public function loadingConfiguration(): void;
-
-    /**
-     * @return string|null
-     */
-    public function getTemplate(): ?string;
 
     /**
      * @return bool

@@ -36,18 +36,6 @@ tabs:
             tab: 'Основные'
             comment: 'Список альтернативных доменов через пробел'
             placeholder: 'subdomain.domain.com subdomain1.domain.com'
-        is_protected:
-            label: 'Protected'
-            type: switch
-            tab: 'Основные'
-            span: left
-            comment: 'Доступ к сайту только для авторизованных пользователей административной панели'
-        is_https:
-            label: 'Принудительный https'
-            type: switch
-            tab: Основные
-            span: left
-            comment: 'Принудительно редиректить на https соединение'
         config[headers]:
             tab: Настройки
             label: 'Заголовки'
@@ -77,3 +65,21 @@ tabs:
                     value:
                         label: Значение (value)
                         comment: 'Например: test'
+        is_protected:
+            label: 'Protected'
+            type: switch
+            tab: 'Безопасность'
+            span: left
+            comment: 'Доступ к сайту только для авторизованных пользователей административной панели'
+        is_https:
+            label: 'Принудительный https'
+            type: switch
+            tab: Безопасность
+            span: left
+            comment: 'Принудительно редиректить на https соединение'
+        config[security][backend]:
+            tab: Безопасность
+            label: 'Доступ к backend'
+            comment: 'Отключить доступ к backend на сайте'
+            type: switch
+            default: 0

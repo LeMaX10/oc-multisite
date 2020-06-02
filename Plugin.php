@@ -1,10 +1,11 @@
-<?php namespace LeMaX10\MultiSite;
+<?php declare(strict_types=1);
+
+namespace LeMaX10\MultiSite;
 
 use Backend\Facades\Backend;
-use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Validator;
-use LeMaX10\MultiSite\Classes\Support\DatabaseSupport;
-use LeMaX10\MultiSite\Classes\MultisiteMiddleware;
+use LeMaX10\MultiSite\Classes\Middlewares\MultisiteCmsMiddleware;
+use LeMaX10\MultiSite\Classes\Middlewares\MultisiteBackendMiddleware;
 use System\Classes\PluginBase;
 use LeMaX10\MultiSite\Classes\Contracts\SiteManager as SiteManagerContract;
 use LeMaX10\MultiSite\Classes\SiteManager;
@@ -15,11 +16,10 @@ use LeMaX10\MultiSite\Classes\SiteManager;
  */
 class Plugin extends PluginBase
 {
-
     /**
-     * @var
+     * @var bool
      */
-    private $siteManager;
+    public $elevated = true;
 
     /**
      * @return array|string[]
@@ -62,20 +62,25 @@ class Plugin extends PluginBase
     /**
      *
      */
-    public function boot()
+    public function register(): void
+    {
+        parent::register();
+
+        $this->app->singleton(SiteManagerContract::class, static function (): SiteManagerContract {
+            return SiteManager::instance();
+        });
+
+        require_once  __DIR__ .'/helpers.php';
+    }
+
+    /**
+     *
+     */
+    public function boot(): void
     {
         parent::boot();
 
-        require_once  __DIR__ .'/helpers.php';
-
-        $this->app->bind(DatabaseSupport::class);
-        $this->app->singleton(SiteManagerContract::class, static function (): SiteManagerContract {
-            return new SiteManager();
-        });
-
         if (!$this->app->runningInConsole()) {
-            $this->siteManager = app(SiteManagerContract::class);
-
             $this->registerMiddleware();
             $this->configurationCore();
         }
@@ -89,7 +94,11 @@ class Plugin extends PluginBase
     private function registerMiddleware(): void
     {
         \Cms\Classes\CmsController::extend(static function ($controller): void {
-            $controller->middleware(MultisiteMiddleware::class);
+            $controller->middleware(MultisiteCmsMiddleware::class);
+        });
+
+        \Backend\Classes\BackendController::extend(static function ($controller): void {
+            $controller->middleware(MultisiteBackendMiddleware::class);
         });
     }
 
@@ -98,14 +107,12 @@ class Plugin extends PluginBase
      */
     private function configurationCore(): void
     {
-        $this->siteManager->loadingConfiguration();
-
-        $template = $this->siteManager->getTemplate();
-        if ($template) {
-            Event::listen('cms.theme.getActiveTheme', static function () use ($template): string {
-                return $template;
-            });
+        $siteConfiguration = SiteManager::instance()->getConfiguration();
+        if (!$siteConfiguration) {
+            return;
         }
+
+        $siteConfiguration->init();
     }
 
     /**
@@ -113,9 +120,9 @@ class Plugin extends PluginBase
      */
     private function registerDomainValidationRule(): void
     {
-        Validator::extend('domain', static function ($attribute, $value, $parameters) {
-            return (filter_var($value, FILTER_VALIDATE_DOMAIN, FILTER_FLAG_HOSTNAME)
-                && preg_match('@\.(.*[A-Za-z])@', $value));
+        Validator::extend('domain', static function ($attribute, $value, $parameters): bool {
+            return \filter_var($value, FILTER_VALIDATE_DOMAIN, FILTER_FLAG_HOSTNAME)
+                && \preg_match('@\.(.*[A-Za-z])@', $value);
         });
     }
 }

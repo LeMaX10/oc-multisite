@@ -2,19 +2,20 @@
 
 use Cms\Classes\Theme;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Arr;
 use LeMaX10\MultiSite\Classes\Rules\Domain;
 use LeMaX10\MultiSite\Classes\SiteCacheManager;
 use Model;
 use October\Rain\Database\Traits\Validation;
 use October\Rain\Support\Str;
 use Ramsey\Uuid\Uuid;
-use LeMaX10\MultiSite\Classes\Contracts\Site as SiteContract;
+use LeMaX10\MultiSite\Classes\Contracts\Entities\Site as SiteEntityContract;
 
 /**
  * Class Site
  * @package LeMaX10\MultiSite\Models
  */
-class Site extends Model implements SiteContract
+class Site extends Model implements SiteEntityContract
 {
     use Validation;
 
@@ -37,6 +38,7 @@ class Site extends Model implements SiteContract
         'slug',
         'alt_domains',
         'config',
+        'theme',
         'is_active',
         'is_protected',
         'is_https'
@@ -173,7 +175,7 @@ class Site extends Model implements SiteContract
     }
 
     /**
-     * @return array
+     * {@inheritDoc}
      */
     public function getResponseHeaders(): array
     {
@@ -182,11 +184,51 @@ class Site extends Model implements SiteContract
     }
 
     /**
-     * @return array
+     * {@inheritDoc}
      */
     public function getConfiguration(): array
     {
         $configuration = $this->config['config'] ?? [];
         return (array) $configuration;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function getSlug(): string
+    {
+        return $this->slug;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function forceHttps(): bool
+    {
+        return $this->is_https;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function isProtected(): bool
+    {
+        return $this->is_protected;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function getTemplate(): ?string
+    {
+        return $this->theme;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function disableBackend(): bool
+    {
+        return !Arr::get($this->config, 'security.backend', false);
     }
 }

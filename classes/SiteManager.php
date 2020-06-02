@@ -1,12 +1,15 @@
-<?php namespace LeMaX10\MultiSite\Classes;
+<?php declare(strict_types=1);
 
+namespace LeMaX10\MultiSite\Classes;
 
 use Backend\Facades\BackendAuth;
+use LeMaX10\MultiSite\Classes\Policies\BackendUserPolicy;
 use October\Rain\Support\Facades\Config;
+use October\Rain\Support\Traits\Singleton;
 use Request;
 use LeMaX10\MultiSite\Models\Site;
 use LeMaX10\MultiSite\Classes\Contracts\SiteManager as SiteManagerContract;
-use LeMaX10\MultiSite\Classes\Contracts\Site as SiteContract;
+use LeMaX10\MultiSite\Classes\Contracts\Entities\Site as SiteEntityContract;
 
 /**
  * Class SiteManager
@@ -14,6 +17,8 @@ use LeMaX10\MultiSite\Classes\Contracts\Site as SiteContract;
  */
 class SiteManager implements SiteManagerContract
 {
+    use Singleton;
+
     /**
      * @var string
      */
@@ -33,24 +38,27 @@ class SiteManager implements SiteManagerContract
     private $cacheManager;
 
     /**
+     * @var SiteConfiguration|null
+     */
+    private $configuration;
+
+    /**
      * SiteManager constructor.
      */
-    public function __construct()
+    public function init()
     {
         $this->domain = Request::getHost();
         $this->schema = Request::getScheme();
         $this->cacheManager = new SiteCacheManager;
+
+        $this->detectionByHost();
     }
 
     /**
      * {@inheritDoc}
      */
-    public function getCurrent(): ?SiteContract
+    public function getCurrent(): ?SiteEntityContract
     {
-        if (!$this->current) {
-            $this->detectionByHost();
-        }
-
         return $this->current;
     }
 
@@ -63,11 +71,23 @@ class SiteManager implements SiteManagerContract
     }
 
     /**
+     * @return SiteConfiguration|null
+     */
+    public function getConfiguration(): ?SiteConfiguration
+    {
+        return $this->configuration;
+    }
+
+    /**
      * {@inheritDoc}
      */
-    public function setSite(?SiteContract $site): SiteManagerContract
+    public function setSite(?SiteEntityContract $site): SiteManagerContract
     {
         $this->current = $site;
+        if ($this->current) {
+            $this->configuration = new SiteConfiguration($this->current);
+        }
+
         return $this;
     }
 
@@ -110,56 +130,17 @@ class SiteManager implements SiteManagerContract
      */
     public function access(): bool
     {
-        $site = $this->getCurrent();
-        if (!$site || !$site->is_protected) {
+        if (!$this->getCurrent()->isProtected()) {
             return true;
         }
 
-        return $site->is_protected && BackendAuth::check();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function forceSsl(): bool
-    {
-        $site = $this->getCurrent();
-        return $site && $site->is_https;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function loadingConfiguration(): void
-    {
-        $site = $this->getCurrent();
-        if (!$site) {
-            return;
+        $policy = false;
+        $backendUser = BackendAuth::getUser();
+        if ($backendUser) {
+            $policy = new BackendUserPolicy;
         }
 
-        Config::set('app.url', $this->schema .'://'. $site->domain);
-        foreach ($site->getConfiguration() as $config) {
-            if (strpos($config['key'], '::') !== false) {
-                $namespace = $config['key'];
-            } else {
-                $namespace = $site->slug .'.'. $config['key'];
-            }
-
-            Config::set($namespace, $config['value']);
-        }
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function getTemplate(): ?string
-    {
-        $site = $this->getCurrent();
-        if (!$site || empty($site->theme)) {
-            return null;
-        }
-
-        return $site->theme;
+        return $policy && $policy->view($backendUser, $this->getCurrent());
     }
 
     /**
@@ -167,7 +148,7 @@ class SiteManager implements SiteManagerContract
      */
     public function mainDomain(): bool
     {
-        $appDomain = str_replace(['http://', 'https://'], '', config('app.url'));
-        return in_array($this->domain, ['localhost', $appDomain]);
+        $appDomain = \parse_url(config('app.url'), PHP_URL_HOST);
+        return \in_array($this->domain, ['localhost', '127.0.0.1', $appDomain], true);
     }
 }
