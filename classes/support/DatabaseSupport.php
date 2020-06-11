@@ -1,4 +1,6 @@
-<?php namespace LeMaX10\MultiSite\Classes\Support;
+<?php declare(strict_types=1);
+
+namespace LeMaX10\MultiSite\Classes\Support;
 
 use Illuminate\Support\Facades\DB;
 use PDO;
@@ -14,7 +16,7 @@ class DatabaseSupport
             ->getPdo()
             ->getAttribute(PDO::ATTR_DRIVER_NAME);
 
-        switch($driver) {
+        switch ($driver) {
             case 'mysql':
                 return $this->supportedMysql();
                 break;

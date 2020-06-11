@@ -1,4 +1,5 @@
-<?php namespace LeMaX10\MultiSite\Classes\Contracts;
+<?php declare(strict_types=1);
+namespace LeMaX10\MultiSite\Classes\Contracts;
 
 use LeMaX10\MultiSite\Classes\Contracts\Entities\Site;
 

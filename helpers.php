@@ -1,7 +1,5 @@
 <?php
 
-use LeMaX10\MultiSite\Classes\Contracts\Site;
-
 if (!function_exists('supportedJsonDb')) {
     /**
      * Supported database json data
@@ -17,9 +15,9 @@ if (!function_exists('supportedJsonDb')) {
 if (!function_exists('currentSite')) {
     /**
      * Helper - get current site
-     * @return Site|null
+     * @return \LeMaX10\MultiSite\Classes\Contracts\Entities\Site|null
      */
-    function currentSite(): ?Site
+    function currentSite(): ?\LeMaX10\MultiSite\Classes\Contracts\Entities\Site
     {
         return app(\LeMaX10\MultiSite\Classes\Contracts\SiteManager::class)
             ->getCurrent();

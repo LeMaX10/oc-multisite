@@ -1,10 +1,12 @@
-<?php namespace LeMaX10\MultiSite\Classes;
+<?php declare(strict_types=1);
+namespace LeMaX10\MultiSite\Classes;
 
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Event;
 use LeMaX10\MultiSite\Classes\Contracts\Entities\Site;
-use \LeMaX10\MultiSite\Classes\Contracts\SiteManager;
 use October\Rain\Support\Facades\Config;
+use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Class SiteConfiguration
@@ -20,7 +22,6 @@ class SiteConfiguration
     /**
      * SiteConfiguration constructor.
      * @param Site $site
-     * @param SiteManager $siteManager
      */
     public function __construct(Site $site)
     {
@@ -36,6 +37,7 @@ class SiteConfiguration
         $this->configureEnviroinment();
         $this->configureTemplate();
         $this->registerRobotsRoute();
+        $this->configureMedia();
     }
 
     /**
@@ -60,9 +62,15 @@ class SiteConfiguration
 
         Config::set('app.url', $schema.'://'. $this->site->domain);
         Config::set('cache.prefix', 'multisite.'. $this->site->getSlug());
+
+        $cmsConfigs = (array) Arr::get($this->site->config, 'cms', []);
+        foreach ($cmsConfigs as $key => $value) {
+            Config::set('cms.'. $key, $value);
+        }
+
+        Config::set('cms.disableCoreUpdates', true);
         Config::set('cms.linkPolicy', $this->site->forceHttps() ? 'secure' : 'detected');
-        Config::set('cms.enableSafeMode', $this->site->safeMode());
-        Config::set('cms.enableRoutesCache', $this->site->isPagesCache());
+        Config::set('cms.backendUri', 'backend');
     }
 
     /**
@@ -70,7 +78,12 @@ class SiteConfiguration
      */
     public function configureEnviroinment(): void
     {
-        foreach ($this->site->getConfiguration() as $config) {
+        $configuration = Arr::except($this->site->getConfiguration(), [
+            'cms.disableCoreUpdates',
+            'cms.backendUri'
+        ]);
+
+        foreach ($configuration as $config) {
             if (strpos($config['key'], '::') !== false) {
                 $namespace = $config['key'];
             } else {
@@ -106,10 +119,20 @@ class SiteConfiguration
             return;
         }
 
-        Route::get('robots.txt', static function () use ($robotsContent) {
-            return response($robotsContent, 200, [
-                'Content-Type' => 'text/plain; charset=UTF-8'
-            ]);
-        });
+        Route::get('robots.txt', config('lemax10.multisite::config.controllers.robots'));
+    }
+
+    /**
+     *
+     */
+    public function configureMedia(): void
+    {
+        $isIndividual = (bool) Arr::get($this->site->config, 'is_media');
+        if (!$isIndividual) {
+            return;
+        }
+
+        Config::set('cms.storage.media.folder', $this->site->getSlug());
+        Config::set('cms.storage.media.path', '/storage/app/'. $this->site->getSlug());
     }
 }

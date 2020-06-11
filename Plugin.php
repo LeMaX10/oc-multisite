@@ -2,10 +2,16 @@
 
 namespace LeMaX10\MultiSite;
 
+use Backend\Classes\BackendController;
+use Backend\Classes\Controller;
 use Backend\Facades\Backend;
+use Backend\Models\User;
 use Illuminate\Support\Facades\Validator;
 use LeMaX10\MultiSite\Classes\Middlewares\MultisiteCmsMiddleware;
 use LeMaX10\MultiSite\Classes\Middlewares\MultisiteBackendMiddleware;
+use LeMaX10\MultiSite\Classes\Observers\TemplateObserver;
+use LeMaX10\MultiSite\Classes\Scopes\BackendUserGlobalScope;
+use LeMaX10\MultiSite\Models\Site;
 use System\Classes\PluginBase;
 use LeMaX10\MultiSite\Classes\Contracts\SiteManager as SiteManagerContract;
 use LeMaX10\MultiSite\Classes\SiteManager;
@@ -79,6 +85,7 @@ class Plugin extends PluginBase
     public function boot(): void
     {
         parent::boot();
+        $this->assetsInBackend();
 
         if (!$this->app->runningInConsole()) {
             $this->registerMiddleware();
@@ -86,6 +93,8 @@ class Plugin extends PluginBase
         }
 
         $this->registerDomainValidationRule();
+        Site::observe(TemplateObserver::class);
+//        User::addGlobalScope(BackendUserGlobalScope::class);
     }
 
     /**
@@ -121,8 +130,30 @@ class Plugin extends PluginBase
     private function registerDomainValidationRule(): void
     {
         Validator::extend('domain', static function ($attribute, $value, $parameters): bool {
-            return \filter_var($value, FILTER_VALIDATE_DOMAIN, FILTER_FLAG_HOSTNAME)
-                && \preg_match('@\.(.*[A-Za-z])@', $value);
+            $value = \filter_var($value, FILTER_SANITIZE_URL);
+            return \filter_var($value, FILTER_VALIDATE_DOMAIN, FILTER_FLAG_HOSTNAME) !== false;
+        });
+    }
+
+    private function assetsInBackend(): void
+    {
+        // Check if we are currently in backend module.
+        if (!\App::runningInBackend()) {
+            return;
+        }
+
+        \Event::listen('backend.page.beforeDisplay', static function ($controller, $action, $params): void {
+            $controller->addJs('/plugins/lemax10/multisite/assets/js/lang/lang.'. \App::getLocale() .'.js');
+            $controller->addJs('/plugins/lemax10/multisite/assets/js/site_selector.js');
+        });
+
+        Controller::extend(static function (Controller $controller): void {
+            $controller->addDynamicMethod('onLoadMultisiteModal', static function () use ($controller) {
+                return $controller->makePartial(
+                    plugins_path('lemax10/multisite/views/changesite.modal'),
+                    ['sites' => SiteManager::instance()->getAll()]
+                );
+            });
         });
     }
 }

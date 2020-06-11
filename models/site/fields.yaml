@@ -27,11 +27,6 @@ fields:
         label: 'Активность'
         type: switch
         span: left
-    config[is_page_cache]:
-        label: 'Кеширование роутов'
-        comment: 'Стандартное кеширование страниц octobercms'
-        type: switch
-        span: left
 tabs:
     fields:
         alt_domains:
@@ -41,12 +36,33 @@ tabs:
             tab: 'Основные'
             comment: 'Список альтернативных доменов через пробел'
             placeholder: 'subdomain.domain.com subdomain1.domain.com'
+            size: tiny
+            valueFrom: alt_domains_field
+        config[is_robots]:
+            tab: 'Основные'
+            label: 'Включить robots.txt'
+            type: switch
+            span: right
+            default: 0
         config[robots]:
             label: 'robots.txt'
             type: textarea
-            span: left
+            span: right
             tab: 'Основные'
             сomment: 'Содержимое robots.txt сайта'
+            cssClass: field-indent
+            default: "User-agent: * \nDisallow: /"
+            size: small
+            trigger:
+                action: show
+                field: ^config[is_robots]
+                condition: checked
+        config[is_media]:
+            tab: 'Основные'
+            label: 'Использовать собственное media пространство'
+            type: switch
+            span: right
+            default: 0
         config[headers]:
             tab: Настройки
             label: 'Заголовки'
@@ -88,15 +104,72 @@ tabs:
             tab: Безопасность
             span: left
             comment: 'Принудительно редиректить на https соединение'
-        config[security][backend]:
+        config[security][is_backend]:
             tab: Безопасность
             label: 'Доступ к backend'
-            comment: 'Отключить доступ к backend на сайте'
+            comment: 'Включить доступ к backend на сайте'
             type: switch
             default: 0
-        config[security][safeMode]:
+        config[cms][backendUri]:
+            tab: Безопасность
+            label: 'Адрес панели'
+            comment: 'Адрес на котором будет находится административная панель'
+            span: left
+            cssClass: field-indent
+            trigger:
+                action: show
+                field: ^config[security][is_backend]
+                condition: checked
+            default: backend
+        config[cms][enableSafeMode]:
             tab: Безопасность
             label: 'Безопасный режим'
-            comment: 'Стандартный безопасный режим octobercms, отключение возможности редактирования php секции шаблона'
+            comment: 'Стандартный безопасный режим OctoberCms, отключение возможности редактирования php секции шаблона'
+            type: switch
+            default: 0
+        config[cms][enableCsrfProtection]:
+            tab: Безопасность
+            label: 'Защита CSRF'
+            comment: 'Проверка всех входящих запросов и AJAX запрос на соответсвие токена безопаности'
+            type: switch
+            default: 0
+        config[cms][enableRoutesCache]:
+            tab: 'Быстродействие'
+            label: 'Кеширование адресов'
+            comment: 'Стандартное кеширование адресов OctoberCMS. (В режиме разработки рекомендуется выключить)'
+            type: switch
+            default: 0
+        config[cms][urlCacheTtl]:
+            tab: 'Быстродействие'
+            label: 'Время жизни кеша (minutes)'
+            comment: 'Время жизни кеш данных адреса в минутах'
+            span: left
+            cssClass: field-indent
+            default: 10
+            trigger:
+                action: show
+                field: ^config[cms][enableRoutesCache]
+                condition: checked
+        config[cms][parsedPageCacheTTL]:
+            tab: 'Быстродействие'
+            label: 'Время жизни кеша объектов (minutes)'
+            comment: 'Время жизни кеш данных разобранных объектов шаблона в минутах'
+            span: right
+            cssClass: field-indent
+            default: 10
+            trigger:
+                action: show
+                field: ^config[cms][enableRoutesCache]
+                condition: checked
+        config[cms][enableAssetCache]:
+            tab: 'Быстродействие'
+            label: 'Кеширование ресурсов'
+            comment: 'Стандартное кеширование ресурсов OctoberCMS. (В режиме разработки рекомендуется выключить)'
+            type: switch
+            default: 0
+        config[cms][enableAssetMinify]:
+            tab: 'Быстродействие'
+            label: 'Минификация ресурсов'
+            comment: 'Стандартная минификация ресурсов OctoberCMS. (В режиме разработки рекомендуется выключить)'
             type: switch
             default: 0

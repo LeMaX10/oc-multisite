@@ -1,0 +1,17 @@
+title = "Domain"
+url = "/"
+layout = "default"
+==
+function onStart()
+{
+$this['domain'] = parse_url(config('app.url'), PHP_URL_HOST);
+}
+==
+<div class="title m-b-md">
+    Site {{ domain }} created
+</div>
+
+<div class="links">
+    <a href="https://octobercms.com">OctoberCMS</a>
+    <a href="https://github.com/LeMaX10/oc-multisite">Multisite Plugin GitHub</a>
+</div>

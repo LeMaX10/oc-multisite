@@ -1,4 +1,5 @@
-<?php namespace LeMaX10\MultiSite\Classes\Middlewares;
+<?php declare(strict_types=1);
+namespace LeMaX10\MultiSite\Classes\Middlewares;
 
 use Illuminate\Support\Facades\App;
 use LeMaX10\MultiSite\Classes\Contracts\SiteManager;

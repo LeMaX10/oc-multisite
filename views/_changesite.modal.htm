@@ -1,0 +1,31 @@
+<div class="modal-dialog">
+    <div class="modal-content">
+        <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+            <h4 class="modal-title">Change Site</h4>
+        </div>
+        <div class="modal-body">
+            <div class="control-list">
+                <table class="table data" data-control="rowlink">
+                    <thead>
+                    <tr>
+                        <th><a href="javascript:;">Name</a></th>
+                        <th style="width: 150px"><span>Action</span></th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <?foreach($sites as $site):?>
+                        <tr>
+                            <td><?=$site->name?></td>
+                            <td class="column-button nolink">
+                                <a href="#" class="btn btn-secondary btn-sm">Change</a>
+                            </td>
+                        </tr>
+                    <?endforeach;?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="modal-footer"></div>
+    </div>
+</div>

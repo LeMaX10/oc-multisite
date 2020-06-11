@@ -1,5 +1,4 @@
 <?php declare(strict_types=1);
-
 namespace LeMaX10\MultiSite\Classes\Contracts\Entities;
 
 /**
@@ -8,6 +7,18 @@ namespace LeMaX10\MultiSite\Classes\Contracts\Entities;
  */
 interface Site
 {
+    /**
+     * Get primary domain
+     * @return string
+     */
+    public function getDomain(): string;
+
+    /**
+     * Get all domains
+     * @return array
+     */
+    public function getDomains(): array;
+
     /**
      * Get unique slug site
      * @return string
@@ -25,6 +36,12 @@ interface Site
      * @return array
      */
     public function getConfiguration(): array;
+
+    /**
+     * Get CMS Core OctoberCMS Configuration
+     * @return array
+     */
+    public function getCmsConfiguration(): array;
 
     /**
      * Force redirect http to https

@@ -1,4 +1,5 @@
-<?php namespace LeMaX10\MultiSite\Models;
+<?php declare(strict_types=1);
+namespace LeMaX10\MultiSite\Models;
 
 use Cms\Classes\Theme;
 use Illuminate\Database\Eloquent\Builder;
@@ -48,7 +49,6 @@ class Site extends Model implements SiteEntityContract
      * @var string[]
      */
     protected $casts = [
-        'config'      => 'json',
         'is_active'   => 'boolean',
         'is_protected' => 'boolean',
         'is_https'     => 'boolean'
@@ -57,14 +57,40 @@ class Site extends Model implements SiteEntityContract
     /**
      * @var string[]
      */
+    protected $jsonable = [
+        'alt_domains',
+        'config'
+    ];
+
+    /**
+     * @var string[]
+     */
     public $rules = [
         'name' => 'required|string',
         'slug' => 'required|string|unique:lemax10_multisite_sites',
+
+        'alt_domains'  => 'sometimes|array',
+        'alt_domains.*' => 'sometimes|domain',
         'domain' => 'required|domain|unique:lemax10_multisite_sites',
+
         'is_active' => 'boolean',
         'is_protected' => 'boolean',
         'is_https'  => 'boolean'
     ];
+
+    /**
+     *
+     */
+    public function beforeValidate(): void
+    {
+        if (!empty($this->alt_domains)) {
+            $altDomains = trim($this->attributes['alt_domains'], '"');
+            $altDomains = explode(' ', $altDomains);
+            $this->alt_domains = array_unique($altDomains);
+        } else {
+            $this->alt_domains = [];
+        }
+    }
 
     /**
      *
@@ -84,21 +110,28 @@ class Site extends Model implements SiteEntityContract
     public function afterSave()
     {
         parent::afterSave();
+
         (new SiteCacheManager)->flush();
     }
 
     /**
      * @return string[]
      */
-    public function getThemeOptions(): array
+    public function getThemeOptions($value, $formData): array
     {
         $themes = [
-            null => 'По умолчанию'
+            null => 'По умолчанию',
+
         ];
 
-        $themeList = (new Theme)->all();
-        foreach ($themeList as $theme) {
-            $themes[$theme->getDirName()] = $theme->getDirName();
+        if (!$this->exists) {
+            $themes[-1] = 'Создать автоматический';
+        }
+
+        /** @var Theme $theme */
+        foreach (Theme::all() as $theme) {
+            $themeName = '('. $theme->getDirName() .') '. $theme->getConfigValue('name');
+            $themes[$theme->getDirName()] = $themeName;
         }
 
         return $themes;
@@ -137,31 +170,22 @@ class Site extends Model implements SiteEntityContract
     {
         $domain = trim(Str::lower($domain));
         $query->where(static function (Builder $query) use ($domain): void {
-            $query->where('domain', $domain);
+            $query->whereDomain($domain);
 
             if (supportedJsonDb()) {
-                $query->orWhereRaw("JSON_SEARCH('alt_domains', 'one', '{$domain}')");
+                $query->orWhereRaw("JSON_SEARCH(alt_domains, 'one', ?) is not null", [$domain]);
             } else { //fallback
-                $query->orWhere('alt_domains', 'like', '%' . $domain . '%');
+                $query->orWhere('alt_domains', 'like', "%{$domain}%");
             }
         });
     }
 
     /**
-     * @param string $value
-     */
-    public function setAltDomainsAttribute(string $value): void
-    {
-        $value = array_unique(explode(' ', $value));
-        $this->attributes['alt_domains'] = \json_encode($value);
-    }
-
-    /**
      * @return string
      */
-    public function getAltDomainsAttribute(): string
+    public function getAltDomainsFieldAttribute(): string
     {
-        return \implode(' ', $this->getDomains());
+        return implode(' ', (array) $this->alt_domains);
     }
 
     /**
@@ -169,8 +193,7 @@ class Site extends Model implements SiteEntityContract
      */
     public function getDomains(): array
     {
-        $altDomains = \json_decode($this->getOriginal('alt_domains'), true);
-        $domains = \array_merge([$this->domain], (array) $altDomains);
+        $domains = \array_merge([$this->domain], (array) $this->alt_domains);
         return (array) $domains;
     }
 
@@ -179,8 +202,7 @@ class Site extends Model implements SiteEntityContract
      */
     public function getResponseHeaders(): array
     {
-        $headers = $this->config['headers'] ?? [];
-        return (array) $headers;
+        return (array) Arr::get($this->config, 'headers');
     }
 
     /**
@@ -188,7 +210,15 @@ class Site extends Model implements SiteEntityContract
      */
     public function getConfiguration(): array
     {
-        $configuration = $this->config['config'] ?? [];
+        return (array) Arr::get($this->config, 'config');
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function getCmsConfiguration(): array
+    {
+        $configuration = $this->config['cms'] ?? [];
         return (array) $configuration;
     }
 
@@ -229,7 +259,7 @@ class Site extends Model implements SiteEntityContract
      */
     public function disableBackend(): bool
     {
-        return !Arr::get($this->config, 'security.backend', false);
+        return !Arr::get($this->config, 'security.is_backend', false);
     }
 
     /**
@@ -237,16 +267,35 @@ class Site extends Model implements SiteEntityContract
      */
     public function getRobotsContent(): string
     {
+        $isRobots = (bool) Arr::get($this->config, 'is_robots');
+        if (!$isRobots) {
+            return '';
+        }
+
         return Arr::get($this->config, 'robots', '');
     }
 
+    /**
+     * @return bool
+     */
     public function isPagesCache(): bool
     {
         return (bool) Arr::get($this->config, 'is_page_cache');
     }
 
+    /**
+     * @return bool
+     */
     public function safeMode(): bool
     {
         return (bool) Arr::get($this->config, 'security.safeMode');
+    }
+
+    /**
+     * @return string
+     */
+    public function getDomain(): string
+    {
+        // TODO: Implement getDomain() method.
     }
 }

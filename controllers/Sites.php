@@ -1,4 +1,5 @@
-<?php namespace LeMaX10\MultiSite\Controllers;
+<?php declare(strict_types=1);
+namespace LeMaX10\MultiSite\Controllers;
 
 use Url;
 use Request;

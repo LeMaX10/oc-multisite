@@ -144,6 +144,14 @@ class SiteManager implements SiteManagerContract
     }
 
     /**
+     * @return mixed
+     */
+    public function getAll()
+    {
+        return Site::active()->get();
+    }
+
+    /**
      * {@inheritDoc}
      */
     public function mainDomain(): bool
