@@ -1,3 +1,21 @@
+<?php
+    $row = function($id, $name, $isSelected) {
+        if ($isSelected) {
+            $class = "";
+            $btn = "<span>Current</span>";
+        } else {
+            $class = " class=\"column-button nolink\"";
+            $btn = "<a href=\"#\" class=\"btn btn-primary btn-sm\" data-request=\"onMultisiteChangeSite\" data-request-data=\"id: '{$id}'\">Select</a>";
+        }
+
+        return "<tr>
+                <td>{$name}</td>
+                <td{$class}>
+                    {$btn}
+                </td>
+            </tr>";
+    }
+?>
 <div class="modal-dialog">
     <div class="modal-content">
         <div class="modal-header">
@@ -9,19 +27,15 @@
                 <table class="table data" data-control="rowlink">
                     <thead>
                     <tr>
-                        <th><a href="javascript:;">Name</a></th>
+                        <th><span>Name</span></th>
                         <th style="width: 150px"><span>Action</span></th>
                     </tr>
                     </thead>
                     <tbody>
-                    <?foreach($sites as $site):?>
-                        <tr>
-                            <td><?=$site->name?></td>
-                            <td class="column-button nolink">
-                                <a href="#" class="btn btn-secondary btn-sm">Change</a>
-                            </td>
-                        </tr>
-                    <?endforeach;?>
+                        <?=$row('main', 'Main', $isMain)?>
+                    <?php $sites->each(static function($site) use($row) {?>
+                        <?=$row($site->getKey(), $site->name, $site->getKey() === siteId())?>
+                    <?php });?>
                     </tbody>
                 </table>
             </div>

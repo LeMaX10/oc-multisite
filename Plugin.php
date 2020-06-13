@@ -148,11 +148,18 @@ class Plugin extends PluginBase
         });
 
         Controller::extend(static function (Controller $controller): void {
-            $controller->addDynamicMethod('onLoadMultisiteModal', static function () use ($controller) {
+            $controller->addDynamicMethod('onMultisiteLoadModal', static function () use ($controller) {
                 return $controller->makePartial(
                     plugins_path('lemax10/multisite/views/changesite.modal'),
-                    ['sites' => SiteManager::instance()->getAll()]
+                    [
+                        'sites' => SiteManager::instance()->getAll(),
+                        'isMain' => SiteManager::instance()->mainDomain()
+                    ]
                 );
+            });
+
+            $controller->addDynamicMethod('onMultisiteChangeSite', static function() use($controller)  {
+
             });
         });
     }
