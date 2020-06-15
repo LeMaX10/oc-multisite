@@ -3,6 +3,11 @@
 namespace LeMaX10\MultiSite\Classes;
 
 use Backend\Facades\BackendAuth;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\App;
+use LeMaX10\MultiSite\Classes\Bridges\DomainBridge;
+use LeMaX10\MultiSite\Classes\Bridges\SessionBridge;
+use LeMaX10\MultiSite\Classes\Contracts\SiteBridge;
 use LeMaX10\MultiSite\Classes\Policies\BackendUserPolicy;
 use October\Rain\Support\Facades\Config;
 use October\Rain\Support\Traits\Singleton;
@@ -20,17 +25,14 @@ class SiteManager implements SiteManagerContract
     use Singleton;
 
     /**
-     * @var string
-     */
-    private $domain;
-    /**
-     * @var string
-     */
-    private $schema;
-    /**
      * @var
      */
     private $current;
+
+    /**
+     * @var string
+     */
+    private $mainHost;
 
     /**
      * @var SiteCacheManager
@@ -47,11 +49,15 @@ class SiteManager implements SiteManagerContract
      */
     public function init()
     {
-        $this->domain = Request::getHost();
-        $this->schema = Request::getScheme();
-        $this->cacheManager = new SiteCacheManager;
+        $this->mainHost = config('app.url');
 
-        $this->detectionByHost();
+        if (App::runningInBackend() && BackendAuth::check()) {
+            $this->runBridge(new SessionBridge);
+        }
+
+        if (!$this->current) {
+            $this->runBridge(new DomainBridge);
+        }
     }
 
     /**
@@ -94,40 +100,6 @@ class SiteManager implements SiteManagerContract
     /**
      * {@inheritDoc}
      */
-    public function setSiteById(string $id): SiteManagerContract
-    {
-        $site = Site::active()->find($id);
-        return $this->setSite($site);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function detectionByHost(): void
-    {
-        if (!$this->domain) {
-            return;
-        }
-
-        $siteKeyInMemory = $this->cacheManager->getByDomain($this->domain);
-        if (!$siteKeyInMemory) {
-            $site = Site::active()
-                ->findByDomain($this->domain)
-                ->first();
-
-            if ($site) {
-                $this->cacheManager->put($this->domain, $site->getKey());
-            }
-        } else {
-            $site = Site::active()->find($siteKeyInMemory);
-        }
-
-        $this->setSite($site);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
     public function access(): bool
     {
         if (!$this->getCurrent()->isProtected()) {
@@ -144,19 +116,36 @@ class SiteManager implements SiteManagerContract
     }
 
     /**
-     * @return mixed
+     * @return Collection
      */
-    public function getAll()
+    public function getAll(): Collection
     {
-        return Site::active()->get();
+        return Site::active()
+            ->orderBy('created_at')
+            ->get();
     }
 
     /**
      * {@inheritDoc}
      */
-    public function mainDomain(): bool
+    public function isMain(): bool
     {
-        $appDomain = \parse_url(config('app.url'), PHP_URL_HOST);
-        return \in_array($this->domain, ['localhost', '127.0.0.1', $appDomain], true);
+        $appDomain = \parse_url($this->mainHost, PHP_URL_HOST);
+        $whitlistHosts = [
+            'localhost',
+            '127.0.0.1',
+            $appDomain
+        ];
+
+        return \in_array(Request::getHost(), $whitlistHosts, true);
+    }
+
+    /**
+     * Running Site Bridge and setting current site from manager
+     * @param SiteBridge $bridge
+     */
+    protected function runBridge(SiteBridge $bridge): void
+    {
+        $this->setSite($bridge->get());
     }
 }

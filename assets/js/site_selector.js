@@ -5,9 +5,9 @@ $(document).ready(function () {
         '</li>');
 
     $('html').hotKey({
-        hotkey: 'ctrl+e, cmd+e',
+        hotkey: 'shift+e',
         hotkeyVisible: true,
-        callback: function() {
+        callback: function () {
             $('a[data-handler="onLoadMultisiteModal"]').click();
         }
     });

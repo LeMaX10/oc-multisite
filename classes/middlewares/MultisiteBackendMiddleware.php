@@ -35,7 +35,7 @@ class MultisiteBackendMiddleware
         $response = $next($request);
         $currentSite = $this->siteManager->getCurrent();
 
-        if (!$this->siteManager->mainDomain() && !$currentSite) {
+        if (!$this->siteManager->isMain() && !$currentSite) {
             return App::abort(503, 'Service Unavailable');
         }
 

@@ -23,17 +23,6 @@ interface SiteManager
     public function setSite(?Site $site): SiteManager;
 
     /**
-     * @param string $id
-     * @return SiteManager
-     */
-    public function setSiteById(string $id): SiteManager;
-
-    /**
-     *
-     */
-    public function detectionByHost(): void;
-
-    /**
      * @return bool
      */
     public function access(): bool;
@@ -41,5 +30,5 @@ interface SiteManager
     /**
      * @return bool
      */
-    public function mainDomain(): bool;
+    public function isMain(): bool;
 }
